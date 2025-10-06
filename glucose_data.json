@@ -1,0 +1,28 @@
+[
+  {
+    "id": "6faea6d0-32cc-4ee7-b6fd-f491328a63ca",
+    "timestamp": "2001-05-08T15:00",
+    "value": 90.0,
+    "note": "dwadwa"
+  },
+  {
+    "id": "5e538ead-80a6-492e-a0e1-c77ea4c34e9f",
+    "timestamp": "2025-10-01T18:42",
+    "value": 342.0,
+    "note": ""
+  },
+  {
+    "id": "5e0ab954-3dc6-404d-a127-f9838e28acf5",
+    "timestamp": "2025-10-06T16:54",
+    "value": 43.0,
+    "note": "sdafas",
+    "state": "ac"
+  },
+  {
+    "id": "36d721b2-0511-4524-9383-47aa4b6376eb",
+    "timestamp": "2025-10-06T16:55",
+    "value": 90.0,
+    "note": "",
+    "state": "ac"
+  }
+]
