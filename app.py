@@ -39,6 +39,19 @@ def write_entries(entries: List[Dict[str, Any]]) -> None:
 def create_app() -> Flask:
     app = Flask(__name__)
     app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-key")
+    
+    # Proxy desteği için
+    from werkzeug.middleware.proxy_fix import ProxyFix
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1, x_prefix=1)
+    
+    # Güvenlik headers
+    @app.after_request
+    def after_request(response):
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'DENY'
+        response.headers['X-XSS-Protection'] = '1; mode=block'
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+        return response
 
     @app.route("/", methods=["GET"])  # Listeleme ve form
     def index():
@@ -84,6 +97,11 @@ def create_app() -> Flask:
             # Request method kontrolü
             if request.method != "POST":
                 flash("Geçersiz istek metodu.", "error")
+                return redirect(url_for("index"))
+            
+            # Content-Type kontrolü
+            if not request.is_json and request.content_type not in ['application/x-www-form-urlencoded', 'multipart/form-data']:
+                flash("Geçersiz içerik türü.", "error")
                 return redirect(url_for("index"))
             
             # Form data'sını güvenli şekilde al
@@ -136,8 +154,8 @@ def create_app() -> Flask:
             flash("Kayıt başarıyla eklendi.", "success")
             
         except Exception as exc:
-            app.logger.error(f"Add entry error: {exc}")
-            flash(f"Beklenmeyen bir hata oluştu: {exc}", "error")
+            app.logger.error(f"Add entry error: {exc}", exc_info=True)
+            flash("Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.", "error")
         
         return redirect(url_for("index"))
 
@@ -167,8 +185,26 @@ def create_app() -> Flask:
 
 app = create_app()
 
+# Error handler
+@app.errorhandler(400)
+def bad_request(error):
+    return "Geçersiz istek", 400
+
+@app.errorhandler(404)
+def not_found(error):
+    return "Sayfa bulunamadı", 404
+
+@app.errorhandler(405)
+def method_not_allowed(error):
+    return "İzin verilmeyen method", 405
+
+@app.errorhandler(500)
+def internal_error(error):
+    return "Sunucu hatası", 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
+    # Production için debug=False
+    debug_mode = os.environ.get("FLASK_DEBUG", "False").lower() == "true"
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=debug_mode)
 
 
