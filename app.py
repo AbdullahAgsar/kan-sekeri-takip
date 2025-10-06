@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Dict, List
 
 from flask import Flask, redirect, render_template, request, url_for, flash
@@ -73,7 +73,9 @@ def create_app() -> Flask:
         entries_sorted = sorted(
             entries, key=lambda e: e.get("timestamp", ""), reverse=True
         )
-        default_now = datetime.now().isoformat(timespec="minutes")
+        # GMT+3 için 3 saat ekle
+        now_plus_3h = datetime.now() + timedelta(hours=3)
+        default_now = now_plus_3h.strftime("%Y-%m-%dT%H:%M")
         return render_template("index.html", entries=entries_sorted, default_now=default_now)
 
     @app.route("/add", methods=["POST"])  # Kayit ekleme
@@ -104,6 +106,9 @@ def create_app() -> Flask:
             else:
                 dt = datetime.now()
 
+            # GMT+3 için 3 saat ekle
+            dt = dt + timedelta(hours=3)
+
             state = state_raw if state_raw in {"ac", "tok"} else "ac"
 
             entry = {
@@ -124,13 +129,23 @@ def create_app() -> Flask:
 
     @app.route("/delete/<entry_id>", methods=["POST"])  # Kayit silme
     def delete(entry_id: str):
-        entries = read_entries()
-        new_entries = [e for e in entries if e.get("id") != entry_id]
-        if len(new_entries) == len(entries):
-            flash("Kayıt bulunamadı.", "error")
-        else:
-            write_entries(new_entries)
-            flash("Kayıt silindi.", "success")
+        try:
+            # Form'dan delete parametresini kontrol et
+            if not request.form.get("delete"):
+                flash("Geçersiz silme isteği.", "error")
+                return redirect(url_for("index"))
+                
+            entries = read_entries()
+            original_count = len(entries)
+            new_entries = [e for e in entries if e.get("id") != entry_id]
+            
+            if len(new_entries) == original_count:
+                flash("Kayıt bulunamadı.", "error")
+            else:
+                write_entries(new_entries)
+                flash("Kayıt silindi.", "success")
+        except Exception as exc:
+            flash(f"Silme işleminde hata oluştu: {exc}", "error")
         return redirect(url_for("index"))
 
     return app
