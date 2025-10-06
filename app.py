@@ -117,9 +117,6 @@ def create_app() -> Flask:
             else:
                 dt = datetime.now()
 
-            # GMT+3 için 3 saat ekle
-            dt = dt + timedelta(hours=3)
-
             # State kontrolü
             state = state_raw if state_raw in {"ac", "tok"} else "ac"
 
