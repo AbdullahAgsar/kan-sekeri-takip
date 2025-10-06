@@ -81,21 +81,32 @@ def create_app() -> Flask:
     @app.route("/add", methods=["POST"])  # Kayit ekleme
     def add():
         try:
+            # Request method kontrolü
+            if request.method != "POST":
+                flash("Geçersiz istek metodu.", "error")
+                return redirect(url_for("index"))
+            
+            # Form data'sını güvenli şekilde al
             value_raw = request.form.get("value", "").strip()
             note = request.form.get("note", "").strip()
             dt_raw = request.form.get("datetime", "").strip()
             state_raw = request.form.get("state", "ac").strip().lower()
 
+            # Değer kontrolü
             if not value_raw:
                 flash("Lütfen kan şekeri değerini girin.", "error")
                 return redirect(url_for("index"))
 
             try:
                 value = float(value_raw.replace(",", "."))
+                if value <= 0 or value > 1000:
+                    flash("Kan şekeri değeri 0-1000 arasında olmalıdır.", "error")
+                    return redirect(url_for("index"))
             except ValueError:
                 flash("Geçersiz değer. Sadece sayı girin.", "error")
                 return redirect(url_for("index"))
 
+            # Tarih kontrolü
             if dt_raw:
                 try:
                     # HTML datetime-local => %Y-%m-%dT%H:%M
@@ -109,8 +120,10 @@ def create_app() -> Flask:
             # GMT+3 için 3 saat ekle
             dt = dt + timedelta(hours=3)
 
+            # State kontrolü
             state = state_raw if state_raw in {"ac", "tok"} else "ac"
 
+            # Entry oluştur
             entry = {
                 "id": str(uuid.uuid4()),
                 "timestamp": dt.isoformat(timespec="minutes"),
@@ -119,12 +132,16 @@ def create_app() -> Flask:
                 "state": state,
             }
 
+            # Veriyi kaydet
             entries = read_entries()
             entries.append(entry)
             write_entries(entries)
-            flash("Kayıt eklendi.", "success")
-        except Exception as exc:  # yalnızca kullanıcıya dost mesaj
+            flash("Kayıt başarıyla eklendi.", "success")
+            
+        except Exception as exc:
+            app.logger.error(f"Add entry error: {exc}")
             flash(f"Beklenmeyen bir hata oluştu: {exc}", "error")
+        
         return redirect(url_for("index"))
 
     @app.route("/delete/<entry_id>", methods=["POST"])  # Kayit silme

@@ -402,7 +402,7 @@
       </div>
       <div class="grid">
         <div class="card">
-          <form method="POST" action="{{ url_for('add') }}">
+          <form method="POST" action="{{ url_for('add') }}" id="glucose-form" enctype="application/x-www-form-urlencoded">
             <div class="row">
               <div>
                 <label for="value">
@@ -446,7 +446,7 @@
                 </div>
               </div>
               <div class="actions">
-                <button type="submit" class="btn primary">
+                <button type="submit" class="btn primary" id="submit-btn">
                   <i class="fas fa-plus" style="margin-right: 6px;"></i>Kaydı Ekle
                 </button>
                 <button type="reset" class="btn">
@@ -564,12 +564,34 @@
         setActive('ac');
       }
 
+      // Form submission kontrolü
+      const form = document.getElementById('glucose-form');
+      const submitBtn = document.getElementById('submit-btn');
+      
+      if (form && submitBtn) {
+        form.addEventListener('submit', function(e) {
+          // Form data'sını kontrol et
+          const value = document.getElementById('value').value;
+          const state = document.getElementById('state').value;
+          
+          if (!value || value.trim() === '') {
+            e.preventDefault();
+            alert('Lütfen kan şekeri değerini girin.');
+            return false;
+          }
+          
+          // Submit butonunu disable et (double submit önleme)
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 6px;"></i>Ekleniyor...';
+        });
+      }
+
       // Chart.js - zaman serisi
       const ctx = document.getElementById('glucoseChart');
       if (ctx && window.Chart) {
-        const entries = {{ entries|tojson }};
+        const chartEntries = {{ entries|tojson }};
         // Yeni -> eski geldiğinden grafikte zamanın doğru akması için tersine çeviriyoruz
-        const sorted = entries.slice().sort((a,b) => (a.timestamp < b.timestamp ? -1 : 1));
+        const sorted = chartEntries.slice().sort((a,b) => (a.timestamp < b.timestamp ? -1 : 1));
         function fmtLabel(ts){
           try {
             const d = new Date(ts);
@@ -636,6 +658,5 @@
       }
     })();
   </script>
+  </body>
   </html>
-
-
