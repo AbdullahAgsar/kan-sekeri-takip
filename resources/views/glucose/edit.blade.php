@@ -2,6 +2,10 @@
 <html lang="tr">
 <head>
     <meta charset="utf-8">
+    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+    <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet">
+    <meta name="bingbot" content="noindex, nofollow, noarchive, nosnippet">
+
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Kan Şekeri Düzenle - Kan Şekeri Takip</title>
     <script src="https://cdn.tailwindcss.com"></script>

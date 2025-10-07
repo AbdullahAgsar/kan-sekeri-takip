@@ -14,7 +14,18 @@ class GlucoseController extends Controller
     public function index()
     {
         $glucoses = Glucose::orderBy('measurement_datetime', 'desc')->get();
-        return view('glucose.index', compact('glucoses'));
+        
+        // Prepare chart data
+        $chartData = $glucoses->map(function($glucose) {
+            return [
+                'value' => $glucose->value,
+                'datetime' => $glucose->measurement_datetime->format('Y-m-d H:i'),
+                'is_hungry' => $glucose->is_hungry,
+                'note' => $glucose->note
+            ];
+        });
+        
+        return view('glucose.index', compact('glucoses', 'chartData'));
     }
 
     /**
